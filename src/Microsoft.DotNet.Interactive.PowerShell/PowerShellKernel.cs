@@ -392,7 +392,7 @@ public class PowerShellKernel :
         return userFormatters.Any(f => 
             f.Type == valueType || 
             f.Type.IsAssignableFrom(valueType) || 
-            interfaces.Contains(f.Type));
+            Array.IndexOf(interfaces, f.Type) >= 0);
     }
 
     internal bool RunLocally(string code, out string errorMessage, bool suppressOutput = false, KernelInvocationContext context = null)
