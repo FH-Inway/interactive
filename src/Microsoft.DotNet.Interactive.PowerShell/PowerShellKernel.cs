@@ -378,6 +378,22 @@ public class PowerShellKernel :
         }
     }
 
+    private bool HasCustomFormatter(object value)
+    {
+        if (value is null)
+        {
+            return false;
+        }
+
+        var valueType = value.GetType();
+        var userFormatters = Formatter.RegisteredFormatters(includeDefaults: false);
+        
+        return userFormatters.Any(f => 
+            f.Type == valueType || 
+            f.Type.IsAssignableFrom(valueType) || 
+            valueType.GetInterfaces().Any(i => i == f.Type));
+    }
+
     internal bool RunLocally(string code, out string errorMessage, bool suppressOutput = false, KernelInvocationContext context = null)
     {
         var command = new Command(code, isScript: true);
@@ -407,9 +423,24 @@ public class PowerShellKernel :
                         var formatted = new FormattedValue("text/plain", value + Environment.NewLine);
                         context.Publish(new StandardOutputValueProduced(context.Command, new[] { formatted } ));
                     }
+                    else if (HasCustomFormatter(value))
+                    {
+                        // Use custom formatter
+                        context.Display(value);
+                    }
                     else
                     {
-                        context.Display(value);
+                        // Use PowerShell native formatting
+                        Pwsh.AddCommand(_outDefaultCommand)
+                            .AddParameter("InputObject", item);
+                        Pwsh.AddCommand("Out-String");
+                        var formattedResult = Pwsh.InvokeAndClear();
+                        if (formattedResult.Count > 0)
+                        {
+                            var output = string.Join("", formattedResult.Select(o => o.ToString()));
+                            var formatted = new FormattedValue("text/plain", output);
+                            context.Publish(new StandardOutputValueProduced(context.Command, new[] { formatted }));
+                        }
                     }
                 }
             }
