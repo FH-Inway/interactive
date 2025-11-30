@@ -387,11 +387,12 @@ public class PowerShellKernel :
 
         var valueType = value.GetType();
         var userFormatters = Formatter.RegisteredFormatters(includeDefaults: false);
+        var interfaces = valueType.GetInterfaces();
         
         return userFormatters.Any(f => 
             f.Type == valueType || 
             f.Type.IsAssignableFrom(valueType) || 
-            valueType.GetInterfaces().Any(i => i == f.Type));
+            interfaces.Contains(f.Type));
     }
 
     internal bool RunLocally(string code, out string errorMessage, bool suppressOutput = false, KernelInvocationContext context = null)
@@ -437,7 +438,7 @@ public class PowerShellKernel :
                         var formattedResult = Pwsh.InvokeAndClear();
                         if (formattedResult.Count > 0)
                         {
-                            var output = string.Join("", formattedResult.Select(o => o.ToString()));
+                            var output = string.Concat(formattedResult);
                             var formatted = new FormattedValue("text/plain", output);
                             context.Publish(new StandardOutputValueProduced(context.Command, new[] { formatted }));
                         }
