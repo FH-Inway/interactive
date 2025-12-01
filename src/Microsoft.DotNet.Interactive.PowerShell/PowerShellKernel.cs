@@ -388,10 +388,10 @@ public class PowerShellKernel :
         var valueType = value.GetType();
         var userFormatters = Formatter.RegisteredFormatters(includeDefaults: false);
         var interfaces = valueType.GetInterfaces();
-
-        return userFormatters.Any(f =>
-            f.Type == valueType ||
-            f.Type.IsAssignableFrom(valueType) ||
+        
+        return userFormatters.Any(f => 
+            f.Type == valueType || 
+            f.Type.IsAssignableFrom(valueType) || 
             Array.IndexOf(interfaces, f.Type) >= 0);
     }
 
@@ -453,7 +453,7 @@ public class PowerShellKernel :
                         if (item.TypeNames[0] == "System.String")
                         {
                             var formatted = new FormattedValue("text/plain", value + Environment.NewLine);
-                            context.Publish(new StandardOutputValueProduced(context.Command, new[] { formatted }));
+                            context.Publish(new StandardOutputValueProduced(context.Command, new[] { formatted } ));
                         }
                         else if (HasCustomFormatter(value))
                         {
